@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>아미노산 조합 학습</title>
+    <base href="/1/" />
     <style>
         body {
             font-family: sans-serif;
@@ -70,7 +71,7 @@
         const resultDisplay = document.getElementById('result-container');
         const structureContainer = document.getElementById('structure-container');
         let currentSequence = '';
-        let loader; // Loader를 전역 변수로 선언, 초기화는 init3D에서
+        let loader;
 
         const aminoAcidMap = {
             'GGG': '글라이신 (Glycine)',
@@ -164,7 +165,7 @@
             directionalLight.position.set(1, 1, 1);
             scene.add(directionalLight);
 
-            loader = new THREE.PDBLoader(); // PDBLoader 인스턴스를 init3D 내에서 생성
+            loader = new THREE.PDBLoader();
         }
 
         function animate() {
@@ -217,7 +218,7 @@
 
         function updateAminoAcidStructure(aminoAcidName) {
             const pdbFile = `pdb_files/${aminoAcidName.toLowerCase()}.pdb`;
-
+            
             loader.load(
                 pdbFile,
                 function (pdb) {
