@@ -5,34 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>아미노산 조합 학습</title>
   <style>
-    body {
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 0;
-      padding: 20px;
-    }
-    .button-container {
-      margin-bottom: 20px;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 5px;
-      cursor: pointer;
-    }
-    #result-container {
-      margin-top: 20px;
-      font-size: 1.2em;
-      font-weight: bold;
-      min-height: 1.4em;
-    }
-    #structure-container {
-      width: 300px;
-      height: 300px;
-      border: 1px solid #ccc;
-      margin-top: 20px;
-    }
+    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
+    .button-container { margin-bottom: 20px; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    #result-container { margin-top: 20px; font-size: 1.2em; font-weight: bold; min-height: 1.4em; }
+    #structure-container { width: 300px; height: 300px; border: 1px solid #ccc; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -67,22 +44,22 @@
     const structureContainer = document.getElementById('structure-container');
 
     const aminoAcidMap = {
-      'GGG': '글라이신', 'GGA': '글라이신', 'GGU': '글라이신', 'GGC': '글라이신',
-      'GCU': '알라닌', 'GCC': '알라닌', 'GCA': '알라닌', 'GCG': '알라닌',
-      'GUU': '발린', 'GUC': '발린', 'GUA': '발린', 'GUG': '발린',
-      'UUA': '류신', 'UUG': '류신', 'CUU': '류신', 'CUC': '류신',
-      'CUA': '류신', 'CUG': '류신', 'AUU': '아이소류신', 'AUC': '아이소류신',
-      'AUA': '아이소류신', 'AUG': '메티오닌', 'UUU': '페닐알라닌', 'UUC': '페닐알라닌',
-      'UAU': '티로신', 'UAC': '티로신', 'UGG': '트립토판',
-      'UCU': '세린', 'UCC': '세린', 'UCA': '세린', 'UCG': '세린', 'AGU': '세린', 'AGC': '세린',
-      'ACU': '트레오닌', 'ACC': '트레오닌', 'ACA': '트레오닌', 'ACG': '트레오닌',
-      'UGU': '시스테인', 'UGC': '시스테인',
-      'CCU': '프롤린', 'CCC': '프롤린', 'CCA': '프롤린', 'CCG': '프롤린',
-      'CAU': '히스티딘', 'CAC': '히스티딘', 'CAA': '글루타민', 'CAG': '글루타민',
-      'AAU': '아스파라긴', 'AAC': '아스파라긴', 'AAA': '라이신', 'AAG': '라이신',
-      'GAU': '아스파르트산', 'GAC': '아스파르트산', 'GAA': '글루탐산', 'GAG': '글루탐산',
-      'CGU': '아르기닌', 'CGC': '아르기닌', 'CGA': '아르기닌', 'CGG': '아르기닌', 'AGA': '아르기닌', 'AGG': '아르기닌',
-      'UAA': '종결코돈', 'UAG': '종결코돈', 'UGA': '종결코돈'
+      'GGG': '글라이신 (Glycine)', 'GGA': '글라이신 (Glycine)', 'GGU': '글라이신 (Glycine)', 'GGC': '글라이신 (Glycine)',
+      'GCU': '알라닌 (Alanine)', 'GCC': '알라닌 (Alanine)', 'GCA': '알라닌 (Alanine)', 'GCG': '알라닌 (Alanine)',
+      'GUU': '발린 (Valine)', 'GUC': '발린 (Valine)', 'GUA': '발린 (Valine)', 'GUG': '발린 (Valine)',
+      'UUA': '류신 (Leucine)', 'UUG': '류신 (Leucine)', 'CUU': '류신 (Leucine)', 'CUC': '류신 (Leucine)',
+      'CUA': '류신 (Leucine)', 'CUG': '류신 (Leucine)', 'AUU': '아이소류신 (Isoleucine)', 'AUC': '아이소류신 (Isoleucine)',
+      'AUA': '아이소류신 (Isoleucine)', 'AUG': '메티오닌 (Methionine)', 'UUU': '페닐알라닌 (Phenylalanine)', 'UUC': '페닐알라닌 (Phenylalanine)',
+      'UAU': '티로신 (Tyrosine)', 'UAC': '티로신 (Tyrosine)', 'UGG': '트립토판 (Tryptophan)',
+      'UCU': '세린 (Serine)', 'UCC': '세린 (Serine)', 'UCA': '세린 (Serine)', 'UCG': '세린 (Serine)', 'AGU': '세린 (Serine)', 'AGC': '세린 (Serine)',
+      'ACU': '트레오닌 (Threonine)', 'ACC': '트레오닌 (Threonine)', 'ACA': '트레오닌 (Threonine)', 'ACG': '트레오닌 (Threonine)',
+      'UGU': '시스테인 (Cysteine)', 'UGC': '시스테인 (Cysteine)',
+      'CCU': '프롤린 (Proline)', 'CCC': '프롤린 (Proline)', 'CCA': '프롤린 (Proline)', 'CCG': '프롤린 (Proline)',
+      'CAU': '히스티딘 (Histidine)', 'CAC': '히스티딘 (Histidine)', 'CAA': '글루타민 (Glutamine)', 'CAG': '글루타민 (Glutamine)',
+      'AAU': '아스파라긴 (Asparagine)', 'AAC': '아스파라긴 (Asparagine)', 'AAA': '라이신 (Lysine)', 'AAG': '라이신 (Lysine)',
+      'GAU': '아스파르트산 (Aspartic Acid)', 'GAC': '아스파르트산 (Aspartic Acid)', 'GAA': '글루탐산 (Glutamic Acid)', 'GAG': '글루탐산 (Glutamic Acid)',
+      'CGU': '아르기닌 (Arginine)', 'CGC': '아르기닌 (Arginine)', 'CGA': '아르기닌 (Arginine)', 'CGG': '아르기닌 (Arginine)', 'AGA': '아르기닌 (Arginine)', 'AGG': '아르기닌 (Arginine)',
+      'UAA': '종결 코돈 (Stop Codon)', 'UAG': '종결 코돈 (Stop Codon)', 'UGA': '종결 코돈 (Stop Codon)'
     };
 
     let currentSequence = '';
@@ -104,13 +81,6 @@
       controls.dampingFactor = 0.2;
       controls.autoRotate = true;
       controls.autoRotateSpeed = 2.0;
-
-      // 조명 추가
-      const ambientLight = new THREE.AmbientLight(0x404040);
-      scene.add(ambientLight);
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      directionalLight.position.set(1, 1, 1);
-      scene.add(directionalLight);
     }
 
     function animate() {
@@ -143,8 +113,8 @@
       }
 
       if (aminoAcidMap.hasOwnProperty(currentSequence)) {
-        const aminoAcidName = aminoAcidMap[currentSequence];
-        resultDisplay.textContent = `조합된 아미노산: ${aminoAcidName}`;
+        const aminoAcidName = aminoAcidMap[currentSequence].split(' ')[0];
+        resultDisplay.textContent = `조합된 아미노산: ${aminoAcidMap[currentSequence]}`;
         updateAminoAcidStructure(aminoAcidName);
       } else {
         resultDisplay.textContent = '해당하는 아미노산을 찾을 수 없습니다.';
@@ -169,53 +139,9 @@
       loader.load(
         pdbFile,
         (pdb) => {
+          // 기존 구조 제거
           clearStructure();
 
-          // pdb.geometryAtoms는 PDBLoader에서 파싱한 원자 위치 등 데이터
-          const geometryAtoms = pdb.geometryAtoms;
-          const geometryBonds = pdb.geometryBonds;
-
-          const group = new THREE.Group();
-          group.name = 'aminoAcidStructure';
-
-          // 원자 그리기
-          geometryAtoms.forEach(atom => {
-            const atomGeometry = new THREE.SphereGeometry(0.2, 16, 16);
-            const atomMaterial = new THREE.MeshPhongMaterial({ color: 0x00cc00 });
-            const atomMesh = new THREE.Mesh(atomGeometry, atomMaterial);
-            atomMesh.position.copy(atom.position);
-            group.add(atomMesh);
-          });
-
-          // 결합 그리기
-          geometryBonds.forEach(bond => {
-            const start = bond.start;
-            const end = bond.end;
-            const bondGeometry = new THREE.BufferGeometry();
-            const vertices = new Float32Array([
-              start.x, start.y, start.z,
-              end.x, end.y, end.z
-            ]);
-            bondGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-            const bondMaterial = new THREE.LineBasicMaterial({ color: 0x0000cc });
-            const bondLine = new THREE.Line(bondGeometry, bondMaterial);
-            group.add(bondLine);
-          });
-
-          scene.add(group);
-        },
-        undefined,
-        (error) => {
-          console.error('PDB 파일 로드 실패:', error);
-          resultDisplay.textContent = '3D 구조 로딩에 실패했습니다.';
-        }
-      );
-    }
-
-    // 초기화 및 애니메이션 시작
-    init3D();
-    animate();
-
-  </script>
-</body>
-</html>
+          // 원자와 결합 메시 생성
+          const materialAtoms = new THREE.MeshPhongMaterial({ color: 0xcc0000, specular: 0x333333, shininess: 15, side: THREE.DoubleSide });
+          const materialBonds = new THREE.MeshPhongMaterial({ color: 0
