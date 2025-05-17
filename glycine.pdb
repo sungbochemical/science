@@ -15,7 +15,7 @@ ATOM      9  H           0       0.793  -1.415   0.891  0.00  0.00           H+0
 ATOM     10  H           0      -2.477  -0.002   0.019  0.00  0.00           H+0
 CONECT    1    2    6    7    0                                         NONE  16
 CONECT    2    1    3    8    9                                         NONE  17
-CONECT    3    2    4    5    0                                         NONE  18
+CONECT    3    2    4    5    0                                         NONE  18 
 CONECT    4    3    0    0    0                                         NONE  19
 CONECT    5    3   10    0    0                                         NONE  20
 END                                                                     NONE  21
