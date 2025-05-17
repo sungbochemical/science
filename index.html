@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>아미노산 조합 학습</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>아미노산 시각화 학습</title>
   <style>
     body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
     .button-container { margin-bottom: 20px; }
@@ -56,7 +56,7 @@
       'UGU': '시스테인 (Cysteine)', 'UGC': '시스테인 (Cysteine)',
       'CCU': '프롤린 (Proline)', 'CCC': '프롤린 (Proline)', 'CCA': '프롤린 (Proline)', 'CCG': '프롤린 (Proline)',
       'CAU': '히스티딘 (Histidine)', 'CAC': '히스티딘 (Histidine)', 'CAA': '글루타민 (Glutamine)', 'CAG': '글루타민 (Glutamine)',
-      'AAU': '아스파라닌 (Asparagine)', 'AAC': '아스파라닌 (Asparagine)', 'AAA': '라이신 (Lysine)', 'AAG': '라이신 (Lysine)',
+      'AAU': '아스파라긴 (Asparagine)', 'AAC': '아스파라긴 (Asparagine)', 'AAA': '라이신 (Lysine)', 'AAG': '라이신 (Lysine)',
       'GAU': '아스파르트산 (Aspartic Acid)', 'GAC': '아스파르트산 (Aspartic Acid)', 'GAA': '글루탐산 (Glutamic Acid)', 'GAG': '글루탐산 (Glutamic Acid)',
       'CGU': '아르기닌 (Arginine)', 'CGC': '아르기닌 (Arginine)', 'CGA': '아르기닌 (Arginine)', 'CGG': '아르기닌 (Arginine)', 'AGA': '아르기닌 (Arginine)', 'AGG': '아르기닌 (Arginine)',
       'UAA': '종결 코돈 (Stop Codon)', 'UAG': '종결 코돈 (Stop Codon)', 'UGA': '종결 코돈 (Stop Codon)'
@@ -65,32 +65,6 @@
     let currentSequence = '';
     let scene, camera, renderer, controls;
     const loader = new PDBLoader();
-
-    function init3D() {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, structureContainer.clientWidth / structureContainer.clientHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setSize(structureContainer.clientWidth, structureContainer.clientHeight);
-      structureContainer.appendChild(renderer.domElement);
-
-      camera.position.z = 5;
-
-      controls = new OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.2;
-      controls.autoRotate = true;
-      controls.autoRotateSpeed = 2.0;
-
-      const light = new THREE.DirectionalLight(0xffffff, 1);
-      light.position.set(1, 1, 1);
-      scene.add(light);
-    }
-
-    function animate() {
-      requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    }
 
     function appendSequence(nucleotide) {
       if (currentSequence.length < 3) {
@@ -128,9 +102,7 @@
 
     function clearStructure() {
       const existing = scene.getObjectByName('aminoAcidStructure');
-      if (existing) {
-        scene.remove(existing);
-      }
+      if (existing) scene.remove(existing);
       camera.position.set(0, 0, 5);
       controls.target.set(0, 0, 0);
       controls.update();
@@ -141,36 +113,64 @@
 
       loader.load(
         pdbFile,
-        (pdb) => {
+        function (pdb) {
+          const materialAtoms = new THREE.MeshPhongMaterial({ color: 0xcc0000, specular: 0x333333, shininess: 15, side: THREE.DoubleSide });
+          const materialBonds = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, specular: 0x333333, shininess: 15, side: THREE.DoubleSide });
+          const atomMesh = new THREE.Mesh(pdb.geometryAtoms, materialAtoms);
+          const bondMesh = new THREE.Mesh(pdb.geometryBonds, materialBonds);
+
+          const molecule = new THREE.Group();
+          molecule.add(atomMesh);
+          molecule.add(bondMesh);
+          molecule.name = 'aminoAcidStructure';
+
           clearStructure();
+          scene.add(molecule);
 
-          const materialAtoms = new THREE.MeshPhongMaterial({ color: 0xcc0000, specular: 0x333333, shininess: 15 });
-          const materialBonds = new THREE.MeshPhongMaterial({ color: 0xffffff });
+          const bbox = new THREE.Box3().setFromObject(molecule);
+          const center = bbox.getCenter(new THREE.Vector3());
+          const size = bbox.getSize(new THREE.Vector3());
+          const maxDimension = Math.max(size.x, size.y, size.z);
+          const cameraDistance = maxDimension * 1.5; // 적절한 거리 설정
 
-          const meshAtoms = new THREE.Mesh(pdb.geometryAtoms, materialAtoms);
-          const meshBonds = new THREE.Mesh(pdb.geometryBonds, materialBonds);
-
-          const group = new THREE.Group();
-          group.name = 'aminoAcidStructure';
-          group.add(meshAtoms);
-          group.add(meshBonds);
-
-          scene.add(group);
-
-          const center = pdb.geometryAtoms.boundingSphere.center;
-          const radius = pdb.geometryAtoms.boundingSphere.radius;
-
+          camera.position.set(center.x, center.y, center.z + cameraDistance);
           controls.target.copy(center);
-          camera.position.set(center.x, center.y, center.z + radius * 3);
           controls.update();
         },
         undefined,
-        (error) => {
-          console.error('PDB 파일 로딩 실패:', error);
+        function (err) {
+          console.error('PDB 파일 로드 실패:', err);
           resultDisplay.textContent += ' (3D 구조 파일을 찾을 수 없습니다.)';
           clearStructure();
         }
       );
+    }
+
+    function init3D() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, structureContainer.clientWidth / structureContainer.clientHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(structureContainer.clientWidth, structureContainer.clientHeight);
+      structureContainer.appendChild(renderer.domElement);
+      camera.position.z = 5;
+
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.2;
+      controls.autoRotate = true;
+
+      const ambientLight = new THREE.AmbientLight(0x404040); // 은은한 주변광 추가
+      scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5); // 방향광 추가
+      directionalLight.position.set(1, 1, 1);
+      scene.add(directionalLight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
     }
 
     init3D();
