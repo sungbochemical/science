@@ -1,164 +1,83 @@
+<!-- 📄 index.html -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>아미노산 시각화</title>
-  <style>
-    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
-    .button-container { margin-bottom: 20px; }
-    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
-    #result-container { margin-top: 20px; font-size: 1.2em; font-weight: bold; }
-    #structure-container { width: 300px; height: 300px; border: 1px solid #ccc; margin-top: 20px; }
-  </style>
+    <meta charset="UTF-8" />
+    <title>코돈 → 아미노산 변환기</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin: 30px; }
+        .btn { margin: 5px; padding: 10px 15px; font-size: 16px; }
+        #sequenceDisplay { margin: 20px 0; font-size: 24px; }
+    </style>
 </head>
 <body>
-  <h1>아미노산 조합 학습</h1>
+    <h1>💡 RNA 코돈을 입력하고 아미노산을 확인해보세요!</h1>
 
-  <div class="button-container">
-    <button onclick="appendSequence('G')">G</button>
-    <button onclick="appendSequence('C')">C</button>
-    <button onclick="appendSequence('A')">A</button>
-    <button onclick="appendSequence('U')">U</button>
-  </div>
+    <div id="sequenceDisplay">현재 코돈: <span id="sequence"></span></div>
 
-  <div>
-    조합된 염기 서열: <span id="sequence"></span>
-  </div>
+    <div>
+        <button class="btn" onclick="appendSequence('A')">A</button>
+        <button class="btn" onclick="appendSequence('U')">U</button>
+        <button class="btn" onclick="appendSequence('G')">G</button>
+        <button class="btn" onclick="appendSequence('C')">C</button>
+        <button class="btn" onclick="resetSequence()">초기화</button>
+    </div>
 
-  <div class="button-container">
-    <button onclick="checkAminoAcid()">결과 확인</button>
-    <button onclick="resetSequence()">초기화</button>
-  </div>
+    <div style="margin-top:20px;">
+        <button class="btn" onclick="checkAminoAcid()">→ 아미노산 확인</button>
+    </div>
 
-  <div id="result-container"></div>
-  <div id="structure-container"></div>
+    <div id="result" style="margin-top:30px; font-size:20px;"></div>
 
-  <script type="module">
-    import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
-    import { OrbitControls } from 'https://unpkg.com/three@0.128.0/examples/jsm/controls/OrbitControls.js';
-    import { PDBLoader } from 'https://unpkg.com/three@0.128.0/examples/jsm/loaders/PDBLoader.js';
+    <script type="module">
+        const codonMap = {
+            'GGA': '글라이신 (Glycine)', 'GGU': '글라이신 (Glycine)', 'GGC': '글라이신 (Glycine)', 'GGG': '글라이신 (Glycine)',
+            'GCU': '알라닌 (Alanine)', 'GCC': '알라닌 (Alanine)', 'GCA': '알라닌 (Alanine)', 'GCG': '알라닌 (Alanine)',
+            'GUU': '발린 (Valine)', 'GUC': '발린 (Valine)', 'GUA': '발린 (Valine)', 'GUG': '발린 (Valine)',
+            'UUA': '류신 (Leucine)', 'UUG': '류신 (Leucine)', 'CUU': '류신 (Leucine)', 'CUC': '류신 (Leucine)',
+            'CUA': '류신 (Leucine)', 'CUG': '류신 (Leucine)', 'AUU': '아이소류신 (Isoleucine)', 'AUC': '아이소류신 (Isoleucine)',
+            'AUA': '아이소류신 (Isoleucine)', 'AUG': '메티오닌 (Methionine)', 'UUU': '페닐알라닌 (Phenylalanine)', 'UUC': '페닐알라닌 (Phenylalanine)',
+            'UAU': '티로신 (Tyrosine)', 'UAC': '티로신 (Tyrosine)', 'UGG': '트립토판 (Tryptophan)',
+            'UCU': '세린 (Serine)', 'UCC': '세린 (Serine)', 'UCA': '세린 (Serine)', 'UCG': '세린 (Serine)', 'AGU': '세린 (Serine)', 'AGC': '세린 (Serine)',
+            'ACU': '트레오닌 (Threonine)', 'ACC': '트레오닌 (Threonine)', 'ACA': '트레오닌 (Threonine)', 'ACG': '트레오닌 (Threonine)',
+            'UGU': '시스테인 (Cysteine)', 'UGC': '시스테인 (Cysteine)',
+            'CCU': '프롤린 (Proline)', 'CCC': '프롤린 (Proline)', 'CCA': '프롤린 (Proline)', 'CCG': '프롤린 (Proline)',
+            'CAU': '히스티딘 (Histidine)', 'CAC': '히스티딘 (Histidine)', 'CAA': '글루타민 (Glutamine)', 'CAG': '글루타민 (Glutamine)',
+            'AAU': '아스파라긴 (Asparagine)', 'AAC': '아스파라긴 (Asparagine)', 'AAA': '라이신 (Lysine)', 'AAG': '라이신 (Lysine)',
+            'GAU': '아스파르트산 (Aspartic Acid)', 'GAC': '아스파르트산 (Aspartic Acid)', 'GAA': '글루탐산 (Glutamic Acid)', 'GAG': '글루탐산 (Glutamic Acid)',
+            'CGU': '아르기닌 (Arginine)', 'CGC': '아르기닌 (Arginine)', 'CGA': '아르기닌 (Arginine)', 'CGG': '아르기닌 (Arginine)', 'AGA': '아르기닌 (Arginine)', 'AGG': '아르기닌 (Arginine)',
+            'UAA': '종결 코돈 (Stop Codon)', 'UAG': '종결 코돈 (Stop Codon)', 'UGA': '종결 코돈 (Stop Codon)'
+        };
 
-    const sequenceDisplay = document.getElementById('sequence');
-    const resultDisplay = document.getElementById('result-container');
-    const structureContainer = document.getElementById('structure-container');
+        let currentSequence = "";
 
-    const aminoAcidMap = {
-      'GGG': '글라이신 (Glycine)', 'GGA': '글라이신 (Glycine)', 'GGU': '글라이신 (Glycine)', 'GGC': '글라이신 (Glycine)',
-      'GCU': '알라닌 (Alanine)', 'GCC': '알라닌 (Alanine)', 'GCA': '알라닌 (Alanine)', 'GCG': '알라닌 (Alanine)',
-      'GUU': '발린 (Valine)', 'GUC': '발린 (Valine)', 'GUA': '발린 (Valine)', 'GUG': '발린 (Valine)',
-      'UUA': '류신 (Leucine)', 'UUG': '류신 (Leucine)', 'CUU': '류신 (Leucine)', 'CUC': '류신 (Leucine)',
-      'CUA': '류신 (Leucine)', 'CUG': '류신 (Leucine)', 'AUU': '아이소류신 (Isoleucine)', 'AUC': '아이소류신 (Isoleucine)',
-      'AUA': '아이소류신 (Isoleucine)', 'AUG': '메티오닌 (Methionine)', 'UUU': '페닐알라닌 (Phenylalanine)', 'UUC': '페닐알라닌 (Phenylalanine)',
-      'UAU': '티로신 (Tyrosine)', 'UAC': '티로신 (Tyrosine)', 'UGG': '트립토판 (Tryptophan)',
-      'UCU': '세린 (Serine)', 'UCC': '세린 (Serine)', 'UCA': '세린 (Serine)', 'UCG': '세린 (Serine)', 'AGU': '세린 (Serine)', 'AGC': '세린 (Serine)',
-      'ACU': '트레오닌 (Threonine)', 'ACC': '트레오닌 (Threonine)', 'ACA': '트레오닌 (Threonine)', 'ACG': '트레오닌 (Threonine)',
-      'UGU': '시스테인 (Cysteine)', 'UGC': '시스테인 (Cysteine)',
-      'CCU': '프롤린 (Proline)', 'CCC': '프롤린 (Proline)', 'CCA': '프롤린 (Proline)', 'CCG': '프롤린 (Proline)',
-      'CAU': '히스티딘 (Histidine)', 'CAC': '히스티딘 (Histidine)', 'CAA': '글루타민 (Glutamine)', 'CAG': '글루타민 (Glutamine)',
-      'AAU': '아스파라긴 (Asparagine)', 'AAC': '아스파라긴 (Asparagine)', 'AAA': '라이신 (Lysine)', 'AAG': '라이신 (Lysine)',
-      'GAU': '아스파르트산 (Aspartic Acid)', 'GAC': '아스파르트산 (Aspartic Acid)', 'GAA': '글루탐산 (Glutamic Acid)', 'GAG': '글루탐산 (Glutamic Acid)',
-      'CGU': '아르기닌 (Arginine)', 'CGC': '아르기닌 (Arginine)', 'CGA': '아르기닌 (Arginine)', 'CGG': '아르기닌 (Arginine)', 'AGA': '아르기닌 (Arginine)', 'AGG': '아르기닌 (Arginine)',
-      'UAA': '종결 코돈 (Stop Codon)', 'UAG': '종결 코돈 (Stop Codon)', 'UGA': '종결 코돈 (Stop Codon)'
-    };
-
-    let currentSequence = '';
-    let scene, camera, renderer, controls;
-    const loader = new PDBLoader();
-
-    function appendSequence(nucleotide) {
-      currentSequence += nucleotide;
-      sequenceDisplay.textContent = currentSequence;
-    }
-    window.appendSequence = appendSequence;
-
-    function resetSequence() {
-      currentSequence = '';
-      sequenceDisplay.textContent = '';
-      resultDisplay.textContent = '';
-      clearStructure();
-    }
-    window.resetSequence = resetSequence;
-
-    function checkAminoAcid() {
-      if (aminoAcidMap.hasOwnProperty(currentSequence)) {
-        const aminoAcidName = aminoAcidMap[currentSequence].split(' ')[0];
-        resultDisplay.textContent = `조합된 아미노산: ${aminoAcidMap[currentSequence]}`;
-        updateAminoAcidStructure(aminoAcidName);
-      } else if (currentSequence.length === 3) {
-        resultDisplay.textContent = `해당하는 아미노산을 찾을 수 없습니다.`;
-        clearStructure();
-      } else if (currentSequence.length > 3) {
-        resultDisplay.textContent = `염기 서열이 너무 깁니다. 3개의 염기 서열로 이루어진 코돈만 인식합니다.`;
-        clearStructure();
-      } else {
-        resultDisplay.textContent = `3개의 염기 서열을 조합하여 확인해 주세요.`;
-        clearStructure();
-      }
-    }
-    window.checkAminoAcid = checkAminoAcid;
-
-    function clearStructure() {
-      const existing = scene.getObjectByName('aminoAcidStructure');
-      if (existing) scene.remove(existing);
-      camera.position.set(0, 0, 5);
-      controls.target.set(0, 0, 0);
-      controls.update();
-    }
-
-    function updateAminoAcidStructure(aminoAcidName) {
-      const pdbFile = `pdb_files/${aminoAcidName.toLowerCase()}.pdb`;
-
-      loader.load(
-        pdbFile,
-        function (pdb) {
-          const atomMesh = new THREE.Mesh(pdb.geometryAtoms, new THREE.MeshPhongMaterial({ color: 0xcc0000 }));
-          const bondMesh = new THREE.Mesh(pdb.geometryBonds, new THREE.MeshPhongMaterial({ color: 0xaaaaaa }));
-
-          const molecule = new THREE.Group();
-          molecule.add(atomMesh);
-          molecule.add(bondMesh);
-          molecule.name = 'aminoAcidStructure';
-
-          clearStructure();
-          scene.add(molecule);
-
-          const bbox = new THREE.Box3().setFromObject(molecule);
-          const center = bbox.getCenter(new THREE.Vector3());
-          camera.position.set(center.x + 5, center.y + 5, center.z + 5);
-          controls.target.copy(center);
-          controls.update();
-        },
-        undefined,
-        function (err) {
-          console.error('PDB 파일 로드 실패:', err);
-          resultDisplay.textContent = '3D 구조를 불러올 수 없습니다.';
+        function appendSequence(nucleotide) {
+            if (currentSequence.length < 3) {
+                currentSequence += nucleotide;
+                sequenceDisplay.textContent = currentSequence;
+            }
         }
-      );
-    }
 
-    function init3D() {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, structureContainer.clientWidth / structureContainer.clientHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(structureContainer.clientWidth, structureContainer.clientHeight);
-      structureContainer.appendChild(renderer.domElement);
-      camera.position.z = 5;
+        function checkAminoAcid() {
+            const resultEl = document.getElementById("result");
+            if (currentSequence.length !== 3) {
+                resultEl.textContent = "⚠️ 3개의 염기를 입력해야 합니다.";
+                return;
+            }
 
-      controls = new OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.2;
-      controls.autoRotate = true;
-    }
+            const aminoAcid = codonMap[currentSequence];
+            resultEl.textContent = aminoAcid
+                ? `🧬 ${currentSequence} → ${aminoAcid}`
+                : `❌ 알 수 없는 코돈입니다: ${currentSequence}`;
+        }
 
-    function animate() {
-      requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    }
+        function resetSequence() {
+            currentSequence = "";
+            sequenceDisplay.textContent = "";
+            document.getElementById("result").textContent = "";
+        }
 
-    init3D();
-    animate();
-  </script>
+        
+    </script>
 </body>
 </html>
