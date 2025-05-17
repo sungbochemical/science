@@ -13,11 +13,81 @@
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
-    <script src="PDBLoader.js"></script>
+    <script src="https://threejs.org/examples/jsm/loaders/PDBLoader.js"></script> <!- 수정된 PDBLoader 로드 방식 -->
     <script>
         const container = document.getElementById('container');
     let scene, camera, renderer, controls;
     const loader = new THREE.PDBLoader();
+    const sequenceDisplay = document.getElementById('sequence');
+    const resultDisplay = document.getElementById('result-container');
+    const structureContainer = document.getElementById('structure-container');
+    let currentSequence = '';
+    const aminoAcidMap = {
+        'GGG': '글라이신 (Glycine)',
+        'GGA': '글라이신 (Glycine)',
+        'GGU': '글라이신 (Glycine)',
+        'GGC': '글라이신 (Glycine)',
+        'GCU': '알라닌 (Alanine)',
+        'GCC': '알라닌 (Alanine)',
+        'GCA': '알라닌 (Alanine)',
+        'GCG': '알라닌 (Alanine)',
+        'GUU': '발린 (Valine)',
+        'GUC': '발린 (Valine)',
+        'GUA': '발린 (Valine)',
+        'GUG': '발린 (Valine)',
+        'UUA': '류신 (Leucine)',
+        'UUG': '류신 (Leucine)',
+        'CUU': '류신 (Leucine)',
+        'CUC': '류신 (Leucine)',
+        'CUA': '류신 (Leucine)',
+        'CUG': '류신 (Leucine)',
+        'AUU': '아이소류신 (Isoleucine)',
+        'AUC': '아이소류신 (Isoleucine)',
+        'AUA': '아이소류신 (Isoleucine)',
+        'AUG': '메티오닌 (Methionine)',
+        'UUU': '페닐알라닌 (Phenylalanine)',
+        'UUC': '페닐알라닌 (Phenylalanine)',
+        'UAU': '티로신 (Tyrosine)',
+        'UAC': '티로신 (Tyrosine)',
+        'UGG': '트립토판 (Tryptophan)',
+        'UCU': '세린 (Serine)',
+        'UCC': '세린 (Serine)',
+        'UCA': '세린 (Serine)',
+        'UCG': '세린 (Serine)',
+        'AGU': '세린 (Serine)',
+        'AGC': '세린 (Serine)',
+        'ACU': '트레오닌 (Threonine)',
+        'ACC': '트레오닌 (Threonine)',
+        'ACA': '트레오닌 (Threonine)',
+        'ACG': '트레오닌 (Threonine)',
+        'UGU': '시스테인 (Cysteine)',
+        'UGC': '시스테인 (Cysteine)',
+        'CCU': '프롤린 (Proline)',
+        'CCC': '프롤린 (Proline)',
+        'CCA': '프롤린 (Proline)',
+        'CCG': '프롤린 (Proline)',
+        'CAU': '히스티딘 (Histidine)',
+        'CAC': '히스티딘 (Histidine)',
+        'CAA': '글루타민 (Glutamine)',
+        'CAG': '글루타민 (Glutamine)',
+        'AAU': '아스파라긴 (Asparagine)',
+        'AAC': '아스파라긴 (Asparagine)',
+        'AAA': '라이신 (Lysine)',
+        'AAG': '라이신 (Lysine)',
+        'GAU': '아스파르트산 (Aspartic Acid)',
+        'GAC': '아스파르트산 (Aspartic Acid)',
+        'GAA': '글루탐산 (Glutamic Acid)',
+        'GAG': '글루탐산 (Glutamic Acid)',
+        'CGU': '아르기닌 (Arginine)',
+        'CGC': '아르기닌 (Arginine)',
+        'CGA': '아르기닌 (Arginine)',
+        'CGG': '아르기닌 (Arginine)',
+        'AGA': '아르기닌 (Arginine)',
+        'AGG': '아르기닌 (Arginine)',
+        'UAA': '종결 코돈 (Stop Codon)',
+        'UAG': '종결 코돈 (Stop Codon)',
+        'UGA': '종결 코돈 (Stop Codon)'
+    };
 
     function init3D() {
         scene = new THREE.Scene();
@@ -118,78 +188,6 @@
             }
         );
     }
-
-    const sequenceDisplay = document.getElementById('sequence');
-    const resultDisplay = document.getElementById('result-container');
-    const structureContainer = document.getElementById('structure-container');
-    let currentSequence = '';
-
-    const aminoAcidMap = {
-        'GGG': '글라이신 (Glycine)',
-        'GGA': '글라이신 (Glycine)',
-        'GGU': '글라이신 (Glycine)',
-        'GGC': '글라이신 (Glycine)',
-        'GCU': '알라닌 (Alanine)',
-        'GCC': '알라닌 (Alanine)',
-        'GCA': '알라닌 (Alanine)',
-        'GCG': '알라닌 (Alanine)',
-        'GUU': '발린 (Valine)',
-        'GUC': '발린 (Valine)',
-        'GUA': '발린 (Valine)',
-        'GUG': '발린 (Valine)',
-        'UUA': '류신 (Leucine)',
-        'UUG': '류신 (Leucine)',
-        'CUU': '류신 (Leucine)',
-        'CUC': '류신 (Leucine)',
-        'CUA': '류신 (Leucine)',
-        'CUG': '류신 (Leucine)',
-        'AUU': '아이소류신 (Isoleucine)',
-        'AUC': '아이소류신 (Isoleucine)',
-        'AUA': '아이소류신 (Isoleucine)',
-        'AUG': '메티오닌 (Methionine)',
-        'UUU': '페닐알라닌 (Phenylalanine)',
-        'UUC': '페닐알라닌 (Phenylalanine)',
-        'UAU': '티로신 (Tyrosine)',
-        'UAC': '티로신 (Tyrosine)',
-        'UGG': '트립토판 (Tryptophan)',
-        'UCU': '세린 (Serine)',
-        'UCC': '세린 (Serine)',
-        'UCA': '세린 (Serine)',
-        'UCG': '세린 (Serine)',
-        'AGU': '세린 (Serine)',
-        'AGC': '세린 (Serine)',
-        'ACU': '트레오닌 (Threonine)',
-        'ACC': '트레오닌 (Threonine)',
-        'ACA': '트레오닌 (Threonine)',
-        'ACG': '트레오닌 (Threonine)',
-        'UGU': '시스테인 (Cysteine)',
-        'UGC': '시스테인 (Cysteine)',
-        'CCU': '프롤린 (Proline)',
-        'CCC': '프롤린 (Proline)',
-        'CCA': '프롤린 (Proline)',
-        'CCG': '프롤린 (Proline)',
-        'CAU': '히스티딘 (Histidine)',
-        'CAC': '히스티딘 (Histidine)',
-        'CAA': '글루타민 (Glutamine)',
-        'CAG': '글루타민 (Glutamine)',
-        'AAU': '아스파라긴 (Asparagine)',
-        'AAC': '아스파라긴 (Asparagine)',
-        'AAA': '라이신 (Lysine)',
-        'AAG': '라이신 (Lysine)',
-        'GAU': '아스파르트산 (Aspartic Acid)',
-        'GAC': '아스파르트산 (Aspartic Acid)',
-        'GAA': '글루탐산 (Glutamic Acid)',
-        'GAG': '글루탐산 (Glutamic Acid)',
-        'CGU': '아르기닌 (Arginine)',
-        'CGC': '아르기닌 (Arginine)',
-        'CGA': '아르기닌 (Arginine)',
-        'CGG': '아르기닌 (Arginine)',
-        'AGA': '아르기닌 (Arginine)',
-        'AGG': '아르기닌 (Arginine)',
-        'UAA': '종결 코돈 (Stop Codon)',
-        'UAG': '종결 코돈 (Stop Codon)',
-        'UGA': '종결 코돈 (Stop Codon)'
-    };
 
     init3D();
     animate();
