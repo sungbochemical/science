@@ -1,0 +1,21 @@
+HEADER    NONAME 17-May-25                                              NONE   1
+TITLE                                                                   NONE   2
+COMPND    GLY                                                           NONE   3
+AUTHOR    Apache                                                        NONE   4
+REVDAT   1  17-May-25     0                                             NONE   5
+ATOM      1  N           0       1.931   0.090  -0.034  0.00  0.00           N+0
+ATOM      2  C           0       0.761  -0.799  -0.008  0.00  0.00           C+0
+ATOM      3  C           0      -0.498   0.029  -0.005  0.00  0.00           C+0
+ATOM      4  O           0      -0.429   1.235  -0.023  0.00  0.00           O+0
+ATOM      5  O           0      -1.697  -0.574   0.018  0.00  0.00           O+0
+ATOM      6  H           0       1.910   0.738   0.738  0.00  0.00           H+0
+ATOM      7  H           0       2.788  -0.442  -0.037  0.00  0.00           H+0
+ATOM      8  H           0       0.772  -1.440  -0.889  0.00  0.00           H+0
+ATOM      9  H           0       0.793  -1.415   0.891  0.00  0.00           H+0
+ATOM     10  H           0      -2.477  -0.002   0.019  0.00  0.00           H+0
+CONECT    1    2    6    7    0                                         NONE  16
+CONECT    2    1    3    8    9                                         NONE  17
+CONECT    3    2    4    5    0                                         NONE  18
+CONECT    4    3    0    0    0                                         NONE  19
+CONECT    5    3   10    0    0                                         NONE  20
+END                                                                     NONE  21
