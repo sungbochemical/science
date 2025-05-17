@@ -40,7 +40,7 @@
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="PDBLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/PDBLoader.js"></script>
 </head>
 <body>
     <h1>아미노산 조합 학습</h1>
@@ -138,8 +138,7 @@
             'UGA': '종결 코돈 (Stop Codon)'
         };
 
-        let scene, camera, renderer, controls;
-        const loader = new THREE.PDBLoader();
+        let scene, camera, renderer, controls, loader; // Loader를 전역 변수로 선언
 
         function init3D() {
             scene = new THREE.Scene();
@@ -163,6 +162,8 @@
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
             directionalLight.position.set(1, 1, 1);
             scene.add(directionalLight);
+
+            loader = new THREE.PDBLoader(); // PDBLoader 인스턴스를 init3D에서 생성
         }
 
         function animate() {
@@ -216,7 +217,7 @@
         function updateAminoAcidStructure(aminoAcidName) {
             const pdbFile = `pdb_files/${aminoAcidName.toLowerCase()}.pdb`;
 
-            loader.load(
+            loader.load( // 선언된 loader 사용
                 pdbFile,
                 function (pdb) {
                     const materialAtoms = new THREE.MeshPhongMaterial({ color: 0xCC0000, specular: 0x333333, shininess: 15, side: THREE.DoubleSide });
