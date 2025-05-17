@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -13,6 +14,87 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
     <script src="PDBLoader.js"></script>
+    <script>
+        const container = document.getElementById('container');
+    let scene, camera, renderer, controls;
+    const loader = new THREE.PDBLoader();
+    const pdbFile = 'pdb_files/'; // 저장한 PDB 파일 경로로 변경
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        camera.position.z = 5;
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; // 부드러운 회전 효과
+        controls.dampingFactor = 0.25;
+        controls.enableZoom = true;
+        controls.autoRotate = true; // 자동 회전 활성화 (선택 사항)
+        controls.autoRotateSpeed = 2.0; // 자동 회전 속도 (선택 사항)
+
+        // 빛 추가
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(0, 1, 1).normalize();
+        scene.add(directionalLight);
+    }
+
+    function loadPDB() {
+        loader.load(
+            pdbFile,
+            function (pdb) {
+                const geometryAtoms = pdb.geometryAtoms;
+                const geometryBonds = pdb.geometryBonds;
+                const materialAtoms = new THREE.MeshPhongMaterial({ color: 0xCC0000, specular: 0x333333, shininess: 15, side: THREE.DoubleSide });
+                const materialBonds = new THREE.MeshPhongMaterial({ color: 0xAAAAAA, specular: 0x333333, shininess: 15, side: THREE.DoubleSide });
+                const atomMesh = new THREE.Mesh(geometryAtoms, materialAtoms);
+                const bondMesh = new THREE.Mesh(geometryBonds, materialBonds);
+
+                const molecule = new THREE.Group();
+                molecule.add(atomMesh);
+                molecule.add(bondMesh);
+
+                scene.add(molecule);
+
+                // 모델의 중심에 카메라 맞추기 (선택 사항)
+                const boundingBox = new THREE.Box3().setFromObject(molecule);
+                const center = boundingBox.getCenter(new THREE.Vector3());
+                camera.position.set(center.x + 5, center.y + 5, center.z + 5);
+                controls.target.set(center.x, center.y, center.z);
+                controls.update();
+            },
+            function (xhr) {
+                console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+            },
+            function (error) {
+                console.error('PDB 파일 로드 중 오류 발생', error);
+            }
+        );
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    init();
+    loadPDB();
+    animate();
+
+    window.addEventListener('resize', onWindowResize, false);
+    </script>
 </head>
 <body>
     <h1>아미노산 조합 학습</h1>
