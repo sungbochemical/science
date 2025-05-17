@@ -1,222 +1,147 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>아미노산 조합 학습</title>
-    <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
-        .button-container { margin-bottom: 20px; }
-        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
-        #result-container { margin-top: 20px; font-size: 1.2em; font-weight: bold; }
-        #structure-container { width: 300px; height: 300px; border: 1px solid #ccc; margin-top: 20px; }
-    </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
-    <script src="PDBLoader.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>아미노산 조합 학습</title>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
+    .button-container { margin-bottom: 20px; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    #result-container { margin-top: 20px; font-size: 1.2em; font-weight: bold; min-height: 1.4em; }
+    #structure-container { width: 300px; height: 300px; border: 1px solid #ccc; margin-top: 20px; }
+  </style>
 </head>
 <body>
-    <h1>아미노산 조합 학습</h1>
+  <h1>아미노산 조합 학습</h1>
 
-    <div class="button-container">
-        <button onclick="appendSequence('G')">G</button>
-        <button onclick="appendSequence('C')">C</button>
-        <button onclick="appendSequence('A')">A</button>
-        <button onclick="appendSequence('U')">U</button>
-    </div>
+  <div class="button-container">
+    <button onclick="appendSequence('G')">G</button>
+    <button onclick="appendSequence('C')">C</button>
+    <button onclick="appendSequence('A')">A</button>
+    <button onclick="appendSequence('U')">U</button>
+  </div>
 
-    <div>
-        조합된 염기 서열: <span id="sequence"></span>
-    </div>
+  <div>
+    조합된 염기 서열: <span id="sequence"></span>
+  </div>
 
-    <div class="button-container">
-        <button onclick="checkAminoAcid()">결과 확인</button>
-        <button onclick="resetSequence()">초기화</button>
-    </div>
+  <div class="button-container">
+    <button onclick="checkAminoAcid()">결과 확인</button>
+    <button onclick="resetSequence()">초기화</button>
+  </div>
 
-    <div id="result-container"></div>
+  <div id="result-container"></div>
+  <div id="structure-container"></div>
 
-    <div id="structure-container"></div>
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
+    import { OrbitControls } from 'https://unpkg.com/three@0.128.0/examples/jsm/controls/OrbitControls.js';
+    import { PDBLoader } from 'https://unpkg.com/three@0.128.0/examples/jsm/loaders/PDBLoader.js';
 
-    <script>
-        const sequenceDisplay = document.getElementById('sequence');
-        const resultDisplay = document.getElementById('result-container');
-        const structureContainer = document.getElementById('structure-container');
-        let currentSequence = '';
+    const sequenceDisplay = document.getElementById('sequence');
+    const resultDisplay = document.getElementById('result-container');
+    const structureContainer = document.getElementById('structure-container');
 
-        const aminoAcidMap = {
-            'GGG': '글라이신 (Glycine)',
-            'GGA': '글라이신 (Glycine)',
-            'GGU': '글라이신 (Glycine)',
-            'GGC': '글라이신 (Glycine)',
-            'GCU': '알라닌 (Alanine)',
-            'GCC': '알라닌 (Alanine)',
-            'GCA': '알라닌 (Alanine)',
-            'GCG': '알라닌 (Alanine)',
-            'GUU': '발린 (Valine)',
-            'GUC': '발린 (Valine)',
-            'GUA': '발린 (Valine)',
-            'GUG': '발린 (Valine)',
-            'UUA': '류신 (Leucine)',
-            'UUG': '류신 (Leucine)',
-            'CUU': '류신 (Leucine)',
-            'CUC': '류신 (Leucine)',
-            'CUA': '류신 (Leucine)',
-            'CUG': '류신 (Leucine)',
-            'AUU': '아이소류신 (Isoleucine)',
-            'AUC': '아이소류신 (Isoleucine)',
-            'AUA': '아이소류신 (Isoleucine)',
-            'AUG': '메티오닌 (Methionine)',
-            'UUU': '페닐알라닌 (Phenylalanine)',
-            'UUC': '페닐알라닌 (Phenylalanine)',
-            'UAU': '티로신 (Tyrosine)',
-            'UAC': '티로신 (Tyrosine)',
-            'UGG': '트립토판 (Tryptophan)',
-            'UCU': '세린 (Serine)',
-            'UCC': '세린 (Serine)',
-            'UCA': '세린 (Serine)',
-            'UCG': '세린 (Serine)',
-            'AGU': '세린 (Serine)',
-            'AGC': '세린 (Serine)',
-            'ACU': '트레오닌 (Threonine)',
-            'ACC': '트레오닌 (Threonine)',
-            'ACA': '트레오닌 (Threonine)',
-            'ACG': '트레오닌 (Threonine)',
-            'UGU': '시스테인 (Cysteine)',
-            'UGC': '시스테인 (Cysteine)',
-            'CCU': '프롤린 (Proline)',
-            'CCC': '프롤린 (Proline)',
-            'CCA': '프롤린 (Proline)',
-            'CCG': '프롤린 (Proline)',
-            'CAU': '히스티딘 (Histidine)',
-            'CAC': '히스티딘 (Histidine)',
-            'CAA': '글루타민 (Glutamine)',
-            'CAG': '글루타민 (Glutamine)',
-            'AAU': '아스파라긴 (Asparagine)',
-            'AAC': '아스파라긴 (Asparagine)',
-            'AAA': '라이신 (Lysine)',
-            'AAG': '라이신 (Lysine)',
-            'GAU': '아스파르트산 (Aspartic Acid)',
-            'GAC': '아스파르트산 (Aspartic Acid)',
-            'GAA': '글루탐산 (Glutamic Acid)',
-            'GAG': '글루탐산 (Glutamic Acid)',
-            'CGU': '아르기닌 (Arginine)',
-            'CGC': '아르기닌 (Arginine)',
-            'CGA': '아르기닌 (Arginine)',
-            'CGG': '아르기닌 (Arginine)',
-            'AGA': '아르기닌 (Arginine)',
-            'AGG': '아르기닌 (Arginine)',
-            'UAA': '종결 코돈 (Stop Codon)',
-            'UAG': '종결 코돈 (Stop Codon)',
-            'UGA': '종결 코돈 (Stop Codon)'
-        };
+    const aminoAcidMap = {
+      'GGG': '글라이신 (Glycine)', 'GGA': '글라이신 (Glycine)', 'GGU': '글라이신 (Glycine)', 'GGC': '글라이신 (Glycine)',
+      'GCU': '알라닌 (Alanine)', 'GCC': '알라닌 (Alanine)', 'GCA': '알라닌 (Alanine)', 'GCG': '알라닌 (Alanine)',
+      'GUU': '발린 (Valine)', 'GUC': '발린 (Valine)', 'GUA': '발린 (Valine)', 'GUG': '발린 (Valine)',
+      'UUA': '류신 (Leucine)', 'UUG': '류신 (Leucine)', 'CUU': '류신 (Leucine)', 'CUC': '류신 (Leucine)',
+      'CUA': '류신 (Leucine)', 'CUG': '류신 (Leucine)', 'AUU': '아이소류신 (Isoleucine)', 'AUC': '아이소류신 (Isoleucine)',
+      'AUA': '아이소류신 (Isoleucine)', 'AUG': '메티오닌 (Methionine)', 'UUU': '페닐알라닌 (Phenylalanine)', 'UUC': '페닐알라닌 (Phenylalanine)',
+      'UAU': '티로신 (Tyrosine)', 'UAC': '티로신 (Tyrosine)', 'UGG': '트립토판 (Tryptophan)',
+      'UCU': '세린 (Serine)', 'UCC': '세린 (Serine)', 'UCA': '세린 (Serine)', 'UCG': '세린 (Serine)', 'AGU': '세린 (Serine)', 'AGC': '세린 (Serine)',
+      'ACU': '트레오닌 (Threonine)', 'ACC': '트레오닌 (Threonine)', 'ACA': '트레오닌 (Threonine)', 'ACG': '트레오닌 (Threonine)',
+      'UGU': '시스테인 (Cysteine)', 'UGC': '시스테인 (Cysteine)',
+      'CCU': '프롤린 (Proline)', 'CCC': '프롤린 (Proline)', 'CCA': '프롤린 (Proline)', 'CCG': '프롤린 (Proline)',
+      'CAU': '히스티딘 (Histidine)', 'CAC': '히스티딘 (Histidine)', 'CAA': '글루타민 (Glutamine)', 'CAG': '글루타민 (Glutamine)',
+      'AAU': '아스파라긴 (Asparagine)', 'AAC': '아스파라긴 (Asparagine)', 'AAA': '라이신 (Lysine)', 'AAG': '라이신 (Lysine)',
+      'GAU': '아스파르트산 (Aspartic Acid)', 'GAC': '아스파르트산 (Aspartic Acid)', 'GAA': '글루탐산 (Glutamic Acid)', 'GAG': '글루탐산 (Glutamic Acid)',
+      'CGU': '아르기닌 (Arginine)', 'CGC': '아르기닌 (Arginine)', 'CGA': '아르기닌 (Arginine)', 'CGG': '아르기닌 (Arginine)', 'AGA': '아르기닌 (Arginine)', 'AGG': '아르기닌 (Arginine)',
+      'UAA': '종결 코돈 (Stop Codon)', 'UAG': '종결 코돈 (Stop Codon)', 'UGA': '종결 코돈 (Stop Codon)'
+    };
 
-        let scene, camera, renderer, controls;
-        const loader = new THREE.PDBLoader();
+    let currentSequence = '';
 
-        function init3D() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, structureContainer.offsetWidth / structureContainer.offsetHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(structureContainer.offsetWidth, structureContainer.offsetHeight);
-            structureContainer.appendChild(renderer.domElement);
+    let scene, camera, renderer, controls;
+    const loader = new PDBLoader();
 
-            camera.position.z = 5;
+    function init3D() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, structureContainer.clientWidth / structureContainer.clientHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(structureContainer.clientWidth, structureContainer.clientHeight);
+      structureContainer.appendChild(renderer.domElement);
 
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.25;
-            controls.enableZoom = true;
-            controls.autoRotate = true;
-            controls.autoRotateSpeed = 2.0;
-        }
+      camera.position.z = 5;
 
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-        }
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.2;
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 2.0;
+    }
 
-        function appendSequence(nucleotide) {
-            currentSequence += nucleotide;
-            sequenceDisplay.textContent = currentSequence;
-        }
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
 
-        function checkAminoAcid() {
-            if (aminoAcidMap.hasOwnProperty(currentSequence)) {
-                const aminoAcidName = aminoAcidMap[currentSequence].split(' ')[0];
-                resultDisplay.textContent = `조합된 아미노산: ${aminoAcidMap[currentSequence]}`;
-                updateAminoAcidStructure(aminoAcidName);
-            } else if (currentSequence.length === 3) {
-                resultDisplay.textContent = `해당하는 아미노산을 찾을 수 없습니다.`;
-                clearStructure();
-            } else if (currentSequence.length > 3) {
-                resultDisplay.textContent = `염기 서열이 너무 깁니다. 3개의 염기 서열로 이루어진 코돈만 인식합니다.`;
-                clearStructure();
-            } else {
-                resultDisplay.textContent = `3개의 염기 서열을 조합하여 확인해 주세요.`;
-                clearStructure();
-            }
-        }
+    function appendSequence(nucleotide) {
+      if (currentSequence.length < 3) {
+        currentSequence += nucleotide;
+        sequenceDisplay.textContent = currentSequence;
+      }
+    }
+    window.appendSequence = appendSequence;
 
-        function resetSequence() {
-            currentSequence = '';
-            sequenceDisplay.textContent = '';
-            resultDisplay.textContent = '';
-            clearStructure();
-        }
+    function resetSequence() {
+      currentSequence = '';
+      sequenceDisplay.textContent = '';
+      resultDisplay.textContent = '';
+      clearStructure();
+    }
+    window.resetSequence = resetSequence;
 
-        function clearStructure() {
-            const existingMolecule = scene.getObjectByName('aminoAcidStructure');
-            if (existingMolecule) {
-                scene.remove(existingMolecule);
-            }
-            // 필요하다면 카메라 및 컨트롤 초기화
-            camera.position.set(0, 0, 5);
-            controls.target.set(0, 0, 0);
-            controls.update();
-        }
+    function checkAminoAcid() {
+      if (currentSequence.length !== 3) {
+        resultDisplay.textContent = '3개의 염기 서열을 조합하여 확인해 주세요.';
+        clearStructure();
+        return;
+      }
 
-        function updateAminoAcidStructure(aminoAcidName) {
-            const pdbFile = `pdb_files/${aminoAcidName.toLowerCase()}.pdb`; // PDB 파일 경로
+      if (aminoAcidMap.hasOwnProperty(currentSequence)) {
+        const aminoAcidName = aminoAcidMap[currentSequence].split(' ')[0];
+        resultDisplay.textContent = `조합된 아미노산: ${aminoAcidMap[currentSequence]}`;
+        updateAminoAcidStructure(aminoAcidName);
+      } else {
+        resultDisplay.textContent = '해당하는 아미노산을 찾을 수 없습니다.';
+        clearStructure();
+      }
+    }
+    window.checkAminoAcid = checkAminoAcid;
 
-            loader.load(
-                pdbFile,
-                function (pdb) {
-                    const geometryAtoms = pdb.geometryAtoms;
-                    const geometryBonds = pdb.geometryBonds;
-                    const materialAtoms = new THREE.MeshPhongMaterial({ color: 0xCC0000, specular: 0x333333, shininess: 15, side: THREE.DoubleSide });
-                    const materialBonds = new THREE.MeshPhongMaterial({ color: 0xAAAAAA, specular: 0x333333, shininess: 15, side: THREE.DoubleSide });
-                    const atomMesh = new THREE.Mesh(geometryAtoms, materialAtoms);
-                    const bondMesh = new THREE.Mesh(geometryBonds, materialBonds);
+    function clearStructure() {
+      const existing = scene.getObjectByName('aminoAcidStructure');
+      if (existing) {
+        scene.remove(existing);
+      }
+      camera.position.set(0, 0, 5);
+      controls.target.set(0, 0, 0);
+      controls.update();
+    }
 
-                    const molecule = new THREE.Group();
-                    molecule.add(atomMesh);
-                    molecule.add(bondMesh);
-                    molecule.name = 'aminoAcidStructure';
+    function updateAminoAcidStructure(aminoAcidName) {
+      const pdbFile = `pdb_files/${aminoAcidName.toLowerCase()}.pdb`;
 
-                    clearStructure(); // 기존 구조 제거
-                    scene.add(molecule);
+      loader.load(
+        pdbFile,
+        (pdb) => {
+          // 기존 구조 제거
+          clearStructure();
 
-                    const boundingBox = new THREE.Box3().setFromObject(molecule);
-                    const center = boundingBox.getCenter(new THREE.Vector3());
-                    camera.position.set(center.x + 5, center.y + 5, center.z + 5);
-                    controls.target.set(center.x, center.y, center.z);
-                    controls.update();
-
-                },
-                function (xhr) {
-                    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-                },
-                function (error) {
-                    console.error('PDB 파일 로드 오류:', error);
-                    resultDisplay.textContent = '3D 구조를 불러올 수 없습니다.';
-                }
-            );
-        }
-
-        init3D();
-        animate();
-    </script>
-</body>
-</html>
+          // 원자와 결합 메시 생성
+          const materialAtoms = new THREE.MeshPhongMaterial({ color: 0xcc0000, specular: 0x333333, shininess: 15, side: THREE.DoubleSide });
+          const materialBonds = new THREE.MeshPhongMaterial({ color: 0
